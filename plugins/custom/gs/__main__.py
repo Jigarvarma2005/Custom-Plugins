@@ -6,7 +6,7 @@ import requests
 from userge import userge, Message
 
 # Please don't steal this code.
-GS_API_URL = os.environ.get("GS_API_URL")
+GS_API_URL = os.environ.get("GS_API_URL","https://jv-api.deta.dev/google?query={squery}&limit={slimit}")
 
 
 @userge.on_cmd("gs", about={
