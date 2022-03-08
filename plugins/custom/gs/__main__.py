@@ -21,7 +21,7 @@ async def jv_gsearch(message: Message):
     await message.edit(f"**Googling** for `{query}` ...")
     flags = message.flags
     limit = int(flags.get('-l', 6))
-    if message.reply_to_message:
+    if message.reply_to_message and not query:
         query = message.reply_to_message.text
     if not query:
         await message.err("Give a query or reply to a message to google!")
