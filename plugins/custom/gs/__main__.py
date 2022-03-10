@@ -4,6 +4,7 @@
 import os
 import requests
 from userge import userge, Message
+from urllib.parse import unquote_plus
 
 # Please don't steal this code.
 GS_API_URL = os.environ.get("GS_API_URL","https://jv-api.deta.dev/google?query={squery}&limit={slimit}")
@@ -32,7 +33,7 @@ async def jv_gsearch(message: Message):
     res = da["result"]
     msg = ""
     for result in res:
-        link = result["link"]
+        link = unquote_plus(result["link"])
         title = result["title"]
         des = result["Description"]
         msg += f"[{title}]({link})\n`{des}`\n\n"
