@@ -27,8 +27,7 @@ async def jv_gsearch(message: Message):
     if not query:
         await message.err("Give a query or reply to a message to google!")
         return
-    if limit >= 10:
-        limit = 10
+    limit = min(limit, 10)
     da = requests.get(GS_API_URL.format(squery=query,slimit=limit)).json()
     res = da["result"]
     msg = ""

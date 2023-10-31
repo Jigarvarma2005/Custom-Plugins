@@ -63,10 +63,7 @@ aria2p_client = aria_start()
 
 async def check_metadata(gid):
     t_file = aria2p_client.get_download(gid)
-    if not t_file.followed_by_ids:
-        return None
-    new_gid = t_file.followed_by_ids[0]
-    return new_gid
+    return None if not t_file.followed_by_ids else t_file.followed_by_ids[0]
 
 
 async def check_progress_for_dl(gid, message: Message, previous, tg_upload):  # sourcery no-metrics
@@ -83,17 +80,17 @@ async def check_progress_for_dl(gid, message: Message, previous, tg_upload):  # 
                 await message.err(str(t_file.error_message))
                 LOGS.info(str(t_file.error_message))
                 return
-            if not complete and not t_file.error_message:
+            if not complete:
                 percentage = int(t_file.progress)
                 downloaded = percentage * int(t_file.total_length) / 100
                 prog_str = "Downloading ....\n[{0}{1}] {2}".format(
                     "".join(
                         Config.FINISHED_PROGRESS_STR
-                        for i in range(math.floor(percentage / 10))
+                        for _ in range(math.floor(percentage / 10))
                     ),
                     "".join(
                         Config.UNFINISHED_PROGRESS_STR
-                        for i in range(10 - math.floor(percentage / 10))
+                        for _ in range(10 - math.floor(percentage / 10))
                     ),
                     t_file.progress_string(),
                 )
@@ -114,17 +111,18 @@ async def check_progress_for_dl(gid, message: Message, previous, tg_upload):  # 
                 if msg != previous:
                     await message.edit(msg)
                     previous = msg
+            elif complete and not t_file.name.lower().startswith("[metadata]"):
+                return (
+                    await upload_path(message, Path(t_file.name), False)
+                    if tg_upload
+                    else await message.edit(
+                        f"**Name :** `{t_file.name}`\n"
+                        f"**Size :** `{t_file.total_length_string()}`\n"
+                        f"**Path :** `{os.path.join(t_file.dir, t_file.name)}`\n"
+                        "**Response :** __Successfully downloaded...__"
+                    )
+                )
             else:
-                if complete and not t_file.name.lower().startswith("[metadata]"):
-                    if tg_upload:
-                        return await upload_path(message, Path(t_file.name), False)
-                    else:
-                        return await message.edit(
-                                     f"**Name :** `{t_file.name}`\n"
-                                     f"**Size :** `{t_file.total_length_string()}`\n"
-                                     f"**Path :** `{os.path.join(t_file.dir, t_file.name)}`\n"
-                                     "**Response :** __Successfully downloaded...__"
-                                    )
                 await message.edit(f"`{msg}`")
             await sleep(Config.Dynamic.EDIT_SLEEP_TIMEOUT)
             await check_progress_for_dl(gid, message, previous, tg_upload)
@@ -149,9 +147,7 @@ async def check_progress_for_dl(gid, message: Message, previous, tg_upload):  # 
 async def t_url_download(message: Message):
     "Add url Into Queue."
     is_url = False
-    tg_upload = False
-    if '-t' in message.flags:
-        tg_upload = True
+    tg_upload = '-t' in message.flags
     myoptions = {
              "dir": os.path.join("/app", Config.Dynamic.DOWN_PATH)
         }
